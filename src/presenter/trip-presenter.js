@@ -1,29 +1,26 @@
 // import TripControlsView from '../view/trip-controls-view.js';
 import TripSortView from '../view/trip-sort-view.js';
-import EventAddView from '../view/event-add-view.js';
-import EventEditView from '../view/event-edit-view.js';
-import TripEventsListView from '../view/trip-events-list-view.js';
-import TripEventsItemView from '../view/trip-events-item-view.js';
+import PointAddAndEditView from '../view/point-add-and-edit-view.js';
+import TripEventsListView from '../view/trip-point-list-view.js';
+import TripPointItemView from '../view/trip-point-item-view.js';
 import { RenderPosition, render } from '../render.js';
-
-const EVENTS_COUNT = 3;
 
 export default class TripPresenter {
   sortComponent = new TripSortView();
-  editsEvent = new EventEditView();
-  addEvent = new EventAddView();
+  addAndEditPoint = new PointAddAndEditView();
   listTripEvents = new TripEventsListView();
 
-  init = (container) => {
+  init = (container, pointsModel) => {
     this.container = container;
+    this.pointsModel = pointsModel;
+    this.tripsTasks = [...this.pointsModel.getPoints()];
 
     render(this.sortComponent, this.container);
     render(this.listTripEvents, this.container);
-    render(this.addEvent, this.listTripEvents.getElement());
-    render(this.editsEvent, this.listTripEvents.getElement(), RenderPosition.AFTERBEGIN);
+    render(new PointAddAndEditView(this.tripsTasks[0]), this.listTripEvents.getElement(), RenderPosition.AFTERBEGIN);
 
-    for(let i = 0; i < EVENTS_COUNT; i++) {
-      render(new TripEventsItemView(), this.listTripEvents.getElement());
+    for(let i = 0; i < this.tripsTasks.length; i++) {
+      render(new TripPointItemView(this.tripsTasks[i]), this.listTripEvents.getElement());
     }
   };
 }
