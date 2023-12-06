@@ -10,7 +10,8 @@ const createPointTemplate = (point) => {
     dateFrom = null,
     dateTo = null,
     isFavorite = false,
-    offers,
+    OffersByType,
+    LocalPoint,
   } = point;
 
   const datePointFull = date !== null ? humanizePointDateFull(date) : '';
@@ -25,43 +26,30 @@ const createPointTemplate = (point) => {
 
   const offersElements = (arr) => {
 
-    if (type in arr) {
+    if (Object.prototype.hasOwnProperty.call(arr, type)) {
       const offersArray = arr[type];
       const offerList = [];
 
-      getRandomElements(offersArray).forEach((item) => {
-        offerList.push(
-          `<li class="event__offer">
-            <span class="event__offer-title">${item.title}</span>
-            &plus;&euro;&nbsp;
-            <span class="event__offer-price">${item.price}</span>
-          </li>`
-        );
+      console.log(arr);
+
+      offersArray.forEach((item) => {
+        if (LocalPoint.offers.includes(item.id)) {
+          offerList.push(
+            `<li class="event__offer">
+              <span class="event__offer-title">${item.title}</span>
+              &plus;&euro;&nbsp;
+              <span class="event__offer-price">${item.price}</span>
+            </li>`
+          );
+        }
       });
 
       return offerList.join(' ');
     } else {
       return '';
     }
-
-    // if (Object.prototype.hasOwnProperty.call(arr, type)) {
-    //   const offersArray = arr[type];
-    //   const offerList = [];
-    //   getRandomElements(offersArray).forEach((item) => {
-    //     offerList.push(
-    //       `<li class="event__offer">
-    //         <span class="event__offer-title">${item.title}</span>
-    //         &plus;&euro;&nbsp;
-    //         <span class="event__offer-price">${item.price}</span>
-    //       </li>`
-    //     );
-    //   });
-
-    //   return offerList.join(' ');
-    // }
   };
 
-  // const showListOffers = offersElements(offers) === '' ? `<ul class="event__selected-offers">${offersElements(offers)}</ul>` : '';
 
   const favoriteClassName = isFavorite ? 'event__favorite-btn event__favorite-btn--active' : 'event__favorite-btn';
 
@@ -87,7 +75,7 @@ const createPointTemplate = (point) => {
         <h4 class="visually-hidden">Offers:</h4>
 
         <ul class="event__selected-offers">
-          ${offersElements(offers)}
+          ${offersElements(OffersByType.offers)}
         </ul>
 
         <button class="${favoriteClassName}" type="button">
@@ -105,23 +93,26 @@ const createPointTemplate = (point) => {
 };
 
 export default class TripPointItemView {
+  #element = null;
+  #point = null;
+
   constructor(point) {
-    this.point = point;
+    this.#point = point;
   }
 
-  getTemplate() {
-    return createPointTemplate(this.point);
+  get template() {
+    return createPointTemplate(this.#point);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
+  get element() {
+    if (!this.#element) {
+      this.#element = createElement(this.template);
     }
 
-    return this.element;
+    return this.#element;
   }
 
   removeElement() {
-    this.element = null;
+    this.#element = null;
   }
 }

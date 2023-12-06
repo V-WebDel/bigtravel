@@ -6,15 +6,15 @@ import TripPresenter from './presenter/trip-presenter.js';
 import PointsModel from './model/points-model.js';
 
 const tripMain = document.querySelector('.trip-main');
-const tripControlsFilters = tripMain.querySelector('.trip-controls__filters');
 const tripEvents = document.querySelector('.trip-events');
+const tripControlsFilters = tripMain.querySelector('.trip-controls__filters');
 
 const pointsModel = new PointsModel();
-const tripPresenter = new TripPresenter();
+const tripPresenter = new TripPresenter(tripEvents, pointsModel);
 
 
 render(new TripInfoView(), tripMain, RenderPosition.AFTERBEGIN);
 render(new TripFiltersView(), tripControlsFilters);
 render(new EventAddBtnView(), tripMain);
 
-tripPresenter.init(tripEvents, pointsModel);
+tripPresenter.init();

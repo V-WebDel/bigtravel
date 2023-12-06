@@ -1,26 +1,86 @@
 // import TripControlsView from '../view/trip-controls-view.js';
 import TripSortView from '../view/trip-sort-view.js';
 import PointAddAndEditView from '../view/point-add-and-edit-view.js';
-import TripEventsListView from '../view/trip-point-list-view.js';
-import TripPointItemView from '../view/trip-point-item-view.js';
-import { RenderPosition, render } from '../render.js';
+import PointsListView from '../view/trip-point-list-view.js';
+import PointItemView from '../view/trip-point-item-view.js';
+import EmptyListView from '../view/empty-list-view.js';
+import { render } from '../render.js';
 
 export default class TripPresenter {
-  sortComponent = new TripSortView();
-  addAndEditPoint = new PointAddAndEditView();
-  listTripEvents = new TripEventsListView();
+  #container = null;
+  #pointsModel = null;
 
-  init = (container, pointsModel) => {
-    this.container = container;
-    this.pointsModel = pointsModel;
-    this.tripsTasks = [...this.pointsModel.getPoints()];
+  #sortComponent = new TripSortView();
+  #pointsListView = new PointsListView();
+  #emptyListView = new EmptyListView();
 
-    render(this.sortComponent, this.container);
-    render(this.listTripEvents, this.container);
-    render(new PointAddAndEditView(this.tripsTasks[0]), this.listTripEvents.getElement(), RenderPosition.AFTERBEGIN);
+  #tripsPoints = [];
 
-    for(let i = 0; i < this.tripsTasks.length; i++) {
-      render(new TripPointItemView(this.tripsTasks[i]), this.listTripEvents.getElement());
+  constructor(container, pointsModel) {
+    this.#container = container;
+    this.#pointsModel = pointsModel;
+  }
+
+  init = () => {
+    this.#tripsPoints = [...this.#pointsModel.points];
+
+    this.#renderTrip();
+  };
+
+  #renderPoint = (point) => {
+    const pointComponent = new PointItemView(point);
+    const pointAddAndEditComponent = new PointAddAndEditView(point);
+
+    const replacePointToForm = () => {
+      this.#pointsListView.element.replaceChild(pointAddAndEditComponent.element, pointComponent.element);
+    };
+
+    const replaceFormToPoint = () => {
+      this.#pointsListView.element.replaceChild(pointComponent.element, pointAddAndEditComponent.element);
+    };
+
+    const onEscKeyDown = (evt) => {
+      if (evt.key === 'Escape' || evt.key === 'Esc') {
+        evt.preventDefault();
+        replaceFormToPoint();
+        document.removeEventListener('keydown', onEscKeyDown);
+      }
+    };
+
+    pointComponent.element.querySelector('.event__rollup-btn').addEventListener('click', () => {
+      replacePointToForm();
+      document.addEventListener('keydown', onEscKeyDown);
+    });
+
+    pointAddAndEditComponent.element.querySelector('form').addEventListener('submit', (evt) => {
+      evt.preventDefault();
+      replaceFormToPoint();
+      document.removeEventListener('keydown', onEscKeyDown);
+    });
+
+    pointAddAndEditComponent.element.querySelector('.event__rollup-btn').addEventListener('click', (evt) => {
+      evt.preventDefault();
+      replaceFormToPoint();
+      document.removeEventListener('keydown', onEscKeyDown);
+    });
+
+    render(pointComponent, this.#pointsListView.element);
+  };
+
+  #renderTrip = () => {
+    render(this.#pointsListView, this.#container);
+
+
+    if (this.#tripsPoints.length === 0) {
+      render(this.#emptyListView, this.#pointsListView.element);
+    } else {
+
+      render(this.#sortComponent, this.#container);
+      render(this.#pointsListView, this.#container);
+
+      for(let i = 0; i < this.#tripsPoints.length; i++) {
+        this.#renderPoint(this.#tripsPoints[i]);
+      }
     }
   };
 }

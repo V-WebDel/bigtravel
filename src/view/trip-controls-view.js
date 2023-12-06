@@ -2,7 +2,9 @@ import {createElement} from '../render.js';
 
 
 export default class TripControlsView {
-  getTemplate() {
+  #element = null;
+
+  get template() {
     return `<div class="trip-main__trip-controls  trip-controls">
       <div class="trip-controls__filters">
         <h2 class="visually-hidden">Filter events</h2>
@@ -28,15 +30,15 @@ export default class TripControlsView {
     </div>`;
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
+  get element() {
+    if (!this.#element) {
+      this.#element = createElement(this.template());
     }
 
-    return this.element;
+    return this.#element;
   }
 
   removeElement() {
-    this.element = null;
+    this.#element = null;
   }
 }

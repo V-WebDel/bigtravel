@@ -66,6 +66,7 @@ const editPointTemplate = (point = {}) => {
     dateTo = null,
     Destination,
     OffersByType,
+    LocalPoint,
   } = point;
 
   const timePointFrom = dateFrom !== null ? humanizePointTime(dateFrom) : '';
@@ -78,10 +79,9 @@ const editPointTemplate = (point = {}) => {
     if (Object.prototype.hasOwnProperty.call(arr, type)) {
       const offersArray = arr[type];
       const offerList = [];
-      const checkedOffers = getRandomElements(offersArray);
 
       offersArray.forEach((item) => {
-        if (checkedOffers.includes(item)) {
+        if (LocalPoint.offers.includes(item.id)) {
           offerList.push(`<div class="event__offer-selector">
             <input class="event__offer-checkbox  visually-hidden" id="event-offer-luggage-1" type="checkbox" name="event-offer-luggage" checked>
             <label class="event__offer-label" for="event-offer-luggage-1">
@@ -135,7 +135,6 @@ const editPointTemplate = (point = {}) => {
   const eventDestinationNames = createDestinationNames(Destination.name);
   const sectionDestination = getSectionDestination();
 
-
   return (
     `<li class="trip-events__item">
       <form class="event event--edit" action="#" method="post">
@@ -159,11 +158,15 @@ const editPointTemplate = (point = {}) => {
           </div>
           <div class="event__field-group  event__field-group--destination">
             <label class="event__label  event__type-output" for="event-destination-1">
+
               ${type}
+
             </label>
             <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${name}" list="destination-list-1">
             <datalist id="destination-list-1">
+
               ${eventDestinationNames}
+
             </datalist>
           </div>
 
@@ -194,9 +197,7 @@ const editPointTemplate = (point = {}) => {
 
           ${showListOffers}
           
-
           ${sectionDestination}
-          
 
         </section>
       </form>
@@ -204,24 +205,27 @@ const editPointTemplate = (point = {}) => {
   );
 };
 
-export default class PointEditView {
+export default class PointAddAndEditView {
+  #element = null;
+  #point = null;
+
   constructor(point) {
-    this.point = point;
+    this.#point = point;
   }
 
-  getTemplate() {
-    return editPointTemplate(this.point);
+  get template() {
+    return editPointTemplate(this.#point);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
+  get element() {
+    if (!this.#element) {
+      this.#element = createElement(this.template);
     }
 
-    return this.element;
+    return this.#element;
   }
 
   removeElement() {
-    this.element = null;
+    this.#element = null;
   }
 }
