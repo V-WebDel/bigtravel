@@ -1,5 +1,15 @@
-import {createElement} from '../render.js';
-import { getRandomElements, humanizePointDateForm, humanizePointTime } from '../util.js';
+import AbstractView from '../framework/view/abstract-view.js';
+import { getRandomElements } from '../utils/common.js';
+import { humanizePointDateForm, humanizePointTime } from '../utils/point.js';
+
+const BLANK_POINT = {
+  name: '',
+  type: 'flight',
+  basePrice: '',
+  dateFrom: null,
+  dateTo: null,
+};
+
 
 const createDescription = (description) => {
   if( description !== undefined && description.length !== 0 ) {
@@ -205,11 +215,11 @@ const editPointTemplate = (point = {}) => {
   );
 };
 
-export default class PointAddAndEditView {
-  #element = null;
+export default class PointAddAndEditView extends AbstractView {
   #point = null;
 
-  constructor(point) {
+  constructor(point = BLANK_POINT) {
+    super();
     this.#point = point;
   }
 
@@ -217,15 +227,24 @@ export default class PointAddAndEditView {
     return editPointTemplate(this.#point);
   }
 
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
 
-    return this.#element;
-  }
+  setCloseClickHandler = (callback) => {
+    this._callback.editClick = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#editClickHandler);
+  };
 
-  removeElement() {
-    this.#element = null;
-  }
+  #editClickHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.editClick();
+  };
+
+  setFormSubmitHandler = (callback) => {
+    this._callback.formSubmit = callback;
+    this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
+  };
+
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.formSubmit();
+  };
 }

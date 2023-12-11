@@ -1,5 +1,5 @@
-import { createElement } from '../render.js';
-import { getRandomElements, formatDuration, humanizePointDateFull, humanizePointDateTime, humanizePointDate, humanizePointTime } from '../util.js';
+import AbstractView from '../framework/view/abstract-view.js';
+import { formatDuration, humanizePointDateFull, humanizePointDateTime, humanizePointDate, humanizePointTime } from '../utils/point.js';
 
 const createPointTemplate = (point) => {
   const {
@@ -29,8 +29,6 @@ const createPointTemplate = (point) => {
     if (Object.prototype.hasOwnProperty.call(arr, type)) {
       const offersArray = arr[type];
       const offerList = [];
-
-      console.log(arr);
 
       offersArray.forEach((item) => {
         if (LocalPoint.offers.includes(item.id)) {
@@ -92,11 +90,11 @@ const createPointTemplate = (point) => {
   );
 };
 
-export default class TripPointItemView {
-  #element = null;
+export default class TripPointItemView extends AbstractView {
   #point = null;
 
   constructor(point) {
+    super();
     this.#point = point;
   }
 
@@ -104,15 +102,13 @@ export default class TripPointItemView {
     return createPointTemplate(this.#point);
   }
 
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
+  setEditClickHandler = (callback) => {
+    this._callback.editClick = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#editClickHandler);
+  };
 
-    return this.#element;
-  }
-
-  removeElement() {
-    this.#element = null;
-  }
+  #editClickHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.editClick();
+  };
 }

@@ -1,22 +1,11 @@
-import {createElement} from '../render.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
+const createLoading = () => (
+  '<p class="trip-events__msg">Loading...</p>'
+);
 
-export default class LoadingView {
-  #element = null;
-
+export default class LoadingView extends AbstractView {
   get template() {
-    return '<p class="trip-events__msg">Loading...</p>';
-  }
-
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.template());
-    }
-
-    return this.#element;
-  }
-
-  removeElement() {
-    this.#element = null;
+    return createLoading();
   }
 }

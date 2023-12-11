@@ -1,10 +1,9 @@
-// import TripControlsView from '../view/trip-controls-view.js';
+import { render, replace } from '../framework/render.js';
 import TripSortView from '../view/trip-sort-view.js';
 import PointAddAndEditView from '../view/point-add-and-edit-view.js';
 import PointsListView from '../view/trip-point-list-view.js';
 import PointItemView from '../view/trip-point-item-view.js';
 import EmptyListView from '../view/empty-list-view.js';
-import { render } from '../render.js';
 
 export default class TripPresenter {
   #container = null;
@@ -32,11 +31,11 @@ export default class TripPresenter {
     const pointAddAndEditComponent = new PointAddAndEditView(point);
 
     const replacePointToForm = () => {
-      this.#pointsListView.element.replaceChild(pointAddAndEditComponent.element, pointComponent.element);
+      replace(pointAddAndEditComponent, pointComponent);
     };
 
     const replaceFormToPoint = () => {
-      this.#pointsListView.element.replaceChild(pointComponent.element, pointAddAndEditComponent.element);
+      replace(pointComponent, pointAddAndEditComponent);
     };
 
     const onEscKeyDown = (evt) => {
@@ -47,19 +46,17 @@ export default class TripPresenter {
       }
     };
 
-    pointComponent.element.querySelector('.event__rollup-btn').addEventListener('click', () => {
+    pointComponent.setEditClickHandler(() => {
       replacePointToForm();
       document.addEventListener('keydown', onEscKeyDown);
     });
 
-    pointAddAndEditComponent.element.querySelector('form').addEventListener('submit', (evt) => {
-      evt.preventDefault();
+    pointAddAndEditComponent.setFormSubmitHandler(() => {
       replaceFormToPoint();
       document.removeEventListener('keydown', onEscKeyDown);
     });
 
-    pointAddAndEditComponent.element.querySelector('.event__rollup-btn').addEventListener('click', (evt) => {
-      evt.preventDefault();
+    pointAddAndEditComponent.setCloseClickHandler(() => {
       replaceFormToPoint();
       document.removeEventListener('keydown', onEscKeyDown);
     });

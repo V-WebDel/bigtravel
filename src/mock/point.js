@@ -1,4 +1,4 @@
-import { getRandomNumber, getRandomElements, getRandomElement } from '../util.js';
+import { getRandomNumber, getRandomElements, getRandomElement } from '../utils/common.js';
 
 const names = ['Amsterdam', 'Chamonix', 'Geneva'];
 const types = ['taxi', 'bus', 'train', 'ship', 'drive', 'flight', 'check-in', 'sightseeing', 'restaurant'];
@@ -14,13 +14,26 @@ const descriptions = [
   'Aliquam erat volutpat. Nunc fermentum tortor ac porta dapibus. In rutrum ac purus sit amet tempus.'
 ];
 
+const dates = [
+  '2023-11-18T14:30:45.123Z',
+  '2024-02-03T08:12:30.987Z',
+  '2023-10-25T19:45:21.654Z',
+  '2024-03-12T03:27:15.789Z',
+  '2023-11-01T12:50:10.234Z',
+  '2024-04-20T22:05:36.543Z',
+  '2023-09-15T17:40:59.876Z',
+  '2024-04-02T06:18:42.321Z',
+  '2023-12-07T10:55:28.465Z',
+  '2024-01-28T01:33:54.210Z'
+];
+
 const isFavorites = [true, false];
 
 const generatePoint = () => ({
   id: 1,
   type: getRandomElement(types),
   name: getRandomElement(names),
-  date: '2019-07-10T22:55:56.845Z',
+  date: getRandomElement(dates),
   dateFrom: '2019-07-11T10:00:00.000Z',
   dateTo: '2019-07-11T12:25:13.375Z',
   basePrice: getRandomNumber(100, 1500, 0),
