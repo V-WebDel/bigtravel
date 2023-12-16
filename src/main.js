@@ -13,7 +13,7 @@ const tripControlsFilters = tripMain.querySelector('.trip-controls__filters');
 const pointsModel = new PointsModel();
 const tripPresenter = new TripPresenter(tripEvents, pointsModel);
 
-const filters = generateFilter(PointsModel.points);
+const filters = generateFilter(PointsModel);
 
 render(new TripInfoView(), tripMain, RenderPosition.AFTERBEGIN);
 render(new TripFiltersView(filters), tripControlsFilters);

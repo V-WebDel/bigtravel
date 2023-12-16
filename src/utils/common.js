@@ -81,4 +81,18 @@ function throttle (callback, delayBetweenFrames) {
 }
 
 
-export { getRandomNumber, getRandomElements, getRandomElement, debounce, throttle };
+const updateItem = (items, update) => {
+  const index = items.findIndex((item) => item.id === update.id);
+
+  if (index === -1) {
+    return items;
+  }
+
+  return [
+    ...items.slice(0, index),
+    update,
+    ...items.slice(index + 1),
+  ];
+};
+
+export { getRandomNumber, getRandomElements, getRandomElement, debounce, throttle, updateItem };

@@ -1,9 +1,11 @@
-import { render, replace } from '../framework/render.js';
+import { render, RenderPosition } from '../framework/render.js';
 import TripSortView from '../view/trip-sort-view.js';
-import PointAddAndEditView from '../view/point-add-and-edit-view.js';
 import PointsListView from '../view/trip-point-list-view.js';
-import PointItemView from '../view/trip-point-item-view.js';
 import EmptyListView from '../view/empty-list-view.js';
+import PointPresenter from './point-presenter';
+import {updateItem} from '../utils/common.js';
+import { sortPointUp, comparePrice, compareDuration } from '../utils/point.js';
+import {SortType} from '../utils/sort.js';
 
 export default class TripPresenter {
   #container = null;
@@ -14,6 +16,11 @@ export default class TripPresenter {
   #emptyListView = new EmptyListView();
 
   #tripsPoints = [];
+  #pointPresenter = new Map();
+
+  #currentSortType = SortType.DEFAULT;
+  #sourcedTripsPoints = [];
+
 
   constructor(container, pointsModel) {
     this.#container = container;
@@ -23,61 +30,88 @@ export default class TripPresenter {
   init = () => {
     this.#tripsPoints = [...this.#pointsModel.points];
 
+    this.#sourcedTripsPoints = [...this.#pointsModel.points];
     this.#renderTrip();
   };
 
+  #handleModeChange = () => {
+    this.#pointPresenter.forEach((presenter) => presenter.resetView());
+  };
+
+  #handlePointChange = (updatedPoint) => {
+    this.#tripsPoints = updateItem(this.#tripsPoints, updatedPoint);
+    this.#sourcedTripsPoints = updateItem(this.#sourcedTripsPoints, updatedPoint);
+    this.#pointPresenter.get(updatedPoint.id).init(updatedPoint);
+  };
+
+  #clearList = () => {
+    this.#pointPresenter.forEach((presenter) => presenter.destroy());
+    this.#pointPresenter.clear();
+  };
+
+  #renderList = () => {
+    render(this.#pointsListView, this.#container);
+  };
+
+  #handleSortTypeChange = (sortType) => {
+    if (this.#currentSortType === sortType) {
+      return;
+    }
+
+    this.#sortPoints(sortType);
+    this.#clearList();
+    this.#renderPoints(this.#tripsPoints);
+  };
+
+  #sortPoints = (sortType) => {
+
+    switch (sortType) {
+      case SortType.DEFAULT:
+        this.#tripsPoints.sort(sortPointUp);
+        break;
+      case SortType.TIME:
+        this.#tripsPoints.sort(compareDuration);
+        break;
+      case SortType.PRICE:
+        this.#tripsPoints.sort(comparePrice);
+        break;
+      default:
+        this.#tripsPoints = [...this.#sourcedTripsPoints];
+    }
+
+    this.#currentSortType = sortType;
+  };
+
+  #renderSort = () => {
+    render(this.#sortComponent, this.#container);
+    this.#sortComponent.setSortTypeChangeHandler(this.#handleSortTypeChange);
+  };
+
   #renderPoint = (point) => {
-    const pointComponent = new PointItemView(point);
-    const pointAddAndEditComponent = new PointAddAndEditView(point);
+    const pointPresenter = new PointPresenter(this.#pointsListView.element, this.#handlePointChange, this.#handleModeChange);
+    pointPresenter.init(point);
+    this.#pointPresenter.set(point.id, pointPresenter);
+  };
 
-    const replacePointToForm = () => {
-      replace(pointAddAndEditComponent, pointComponent);
-    };
+  #renderPoints = (from, to) => {
+    this.#tripsPoints
+      .slice(from, to)
+      .forEach((point) => this.#renderPoint(point));
+  };
 
-    const replaceFormToPoint = () => {
-      replace(pointComponent, pointAddAndEditComponent);
-    };
-
-    const onEscKeyDown = (evt) => {
-      if (evt.key === 'Escape' || evt.key === 'Esc') {
-        evt.preventDefault();
-        replaceFormToPoint();
-        document.removeEventListener('keydown', onEscKeyDown);
-      }
-    };
-
-    pointComponent.setEditClickHandler(() => {
-      replacePointToForm();
-      document.addEventListener('keydown', onEscKeyDown);
-    });
-
-    pointAddAndEditComponent.setFormSubmitHandler(() => {
-      replaceFormToPoint();
-      document.removeEventListener('keydown', onEscKeyDown);
-    });
-
-    pointAddAndEditComponent.setCloseClickHandler(() => {
-      replaceFormToPoint();
-      document.removeEventListener('keydown', onEscKeyDown);
-    });
-
-    render(pointComponent, this.#pointsListView.element);
+  #renderNoPoints= () => {
+    render(this.#emptyListView, this.#pointsListView.element, RenderPosition.AFTERBEGIN);
   };
 
   #renderTrip = () => {
-    render(this.#pointsListView, this.#container);
-
-
     if (this.#tripsPoints.length === 0) {
-      render(this.#emptyListView, this.#pointsListView.element);
-    } else {
-
-      render(this.#sortComponent, this.#container);
-      render(this.#pointsListView, this.#container);
-
-      for(let i = 0; i < this.#tripsPoints.length; i++) {
-        this.#renderPoint(this.#tripsPoints[i]);
-      }
+      this.#renderNoPoints();
+      return;
     }
+
+    this.#renderPoints(this.#tripsPoints);
+
+    this.#renderSort();
+    this.#renderList();
   };
 }
