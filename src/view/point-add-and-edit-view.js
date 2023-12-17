@@ -1,4 +1,4 @@
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { getRandomElements } from '../utils/common.js';
 import { humanizePointDateForm, humanizePointTime } from '../utils/point.js';
 
@@ -8,33 +8,6 @@ const BLANK_POINT = {
   basePrice: '',
   dateFrom: null,
   dateTo: null,
-};
-
-
-const createDescription = (description) => {
-  if( description !== undefined && description.length !== 0 ) {
-    return `<p class="event__destination-description">${description}</p>`;
-  } else {
-    return '';
-  }
-};
-
-const createPhotos = (photos) => {
-  if(photos !== undefined) {
-    const photosList = [];
-
-    getRandomElements(photos).forEach((item) => {
-      photosList.push(
-        `<img class="event__photo" src="${item.src}" alt="${item.description}">`
-      );
-    });
-
-    if(photosList.length !== 0){
-      return photosList.join(' ');
-    }
-  } else {
-    return '';
-  }
 };
 
 
@@ -90,11 +63,11 @@ const editPointTemplate = (point = {}) => {
       const offersArray = arr[type];
       const offerList = [];
 
-      offersArray.forEach((item) => {
+      offersArray.forEach((item, idx) => {
         if (LocalPoint.offers.includes(item.id)) {
           offerList.push(`<div class="event__offer-selector">
-            <input class="event__offer-checkbox  visually-hidden" id="event-offer-luggage-1" type="checkbox" name="event-offer-luggage" checked>
-            <label class="event__offer-label" for="event-offer-luggage-1">
+            <input class="event__offer-checkbox  visually-hidden" id="event-offer-luggage-${idx + 1}" type="checkbox" name="event-offer-luggage" checked>
+            <label class="event__offer-label" for="event-offer-luggage-${idx + 1}">
               <span class="event__offer-title">${item.title}</span>
               &plus;&euro;&nbsp;
               <span class="event__offer-price">${item.price}</span>
@@ -102,8 +75,8 @@ const editPointTemplate = (point = {}) => {
           </div>`);
         } else {
           offerList.push(`<div class="event__offer-selector">
-            <input class="event__offer-checkbox  visually-hidden" id="event-offer-luggage-1" type="checkbox" name="event-offer-luggage">
-            <label class="event__offer-label" for="event-offer-luggage-1">
+            <input class="event__offer-checkbox  visually-hidden" id="event-offer-luggage-${idx + 1}" type="checkbox" name="event-offer-luggage">
+            <label class="event__offer-label" for="event-offer-luggage-${idx + 1}">
               <span class="event__offer-title">${item.title}</span>
               &plus;&euro;&nbsp;
               <span class="event__offer-price">${item.price}</span>
@@ -116,10 +89,42 @@ const editPointTemplate = (point = {}) => {
     }
   };
 
+  const createDescription = (cityName, descriptionArray) => {
+
+    for (let i = 0; i < descriptionArray.length; i++) {
+      const cityObject = descriptionArray[i];
+      const cityNameKey = Object.keys(cityObject)[0];
+
+      if (cityNameKey === cityName) {
+        return `<p class="event__destination-description">${cityObject[cityNameKey]}</p>`;
+      }
+    }
+
+    return '';
+  };
+
+  const createPhotos = (cityName, photosArray) => {
+    if(Object.prototype.hasOwnProperty.call(photosArray, cityName) && photosArray !== undefined) {
+      const photosList = [];
+
+      photosArray[cityName].forEach((item) => {
+        photosList.push(
+          `<img class="event__photo" src="${item.src}" alt="${item.description}">`
+        );
+      });
+
+      if(photosList.length !== 0){
+        return photosList.join(' ');
+      }
+    } else {
+      return '';
+    }
+  };
+
   const getSectionDestination = () => {
 
-    const description = createDescription(Destination.description);
-    const photos = createPhotos(Destination.pictures);
+    const description = createDescription(name, Destination.description);
+    const photos = createPhotos(name, Destination.pictures);
 
     if( description !== '') {
       let photosElement = '';
@@ -215,18 +220,24 @@ const editPointTemplate = (point = {}) => {
   );
 };
 
-export default class PointAddAndEditView extends AbstractView {
-  #point = null;
+export default class PointAddAndEditView extends AbstractStatefulView {
 
   constructor(point = BLANK_POINT) {
     super();
-    this.#point = point;
+    this._state = PointAddAndEditView.parsePointToState(point);
+
+    this.#setInnerHandlers();
   }
 
   get template() {
-    return editPointTemplate(this.#point);
+    return editPointTemplate(this._state);
   }
 
+  reset = (point) => {
+    this.updateElement(
+      PointAddAndEditView.parsePointToState(point),
+    );
+  };
 
   setCloseClickHandler = (callback) => {
     this._callback.editClick = callback;
@@ -245,6 +256,58 @@ export default class PointAddAndEditView extends AbstractView {
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this._callback.formSubmit(this.#point);
+    this._callback.formSubmit(PointAddAndEditView.parsePointToState(this._state));
   };
+
+  #typeClickHandler = (evt) => {
+    evt.preventDefault();
+
+    this.updateElement({
+      type: evt.currentTarget.value,
+    });
+  };
+
+  #destinationInputChangeHandler = (evt) => {
+    evt.preventDefault();
+
+    this.updateElement({
+      name: evt.target.value
+    });
+  };
+
+  #priceInputChangeHandler = (evt) => {
+    evt.preventDefault();
+
+    this._setState({
+      basePrice: evt.target.value
+    });
+  };
+
+  #setInnerHandlers = () => {
+    this.element.querySelectorAll('input[name="event-type"]').forEach((element) => {
+      element.addEventListener('change', this.#typeClickHandler);
+    });
+    this.element.querySelector('.event__input--destination').addEventListener('change', this.#destinationInputChangeHandler);
+    this.element.querySelector('.event__input--price').addEventListener('change', this.#priceInputChangeHandler);
+  };
+
+  static parsePointToState(point) {
+    return {...point};
+  }
+
+  static parseStateToPoint(state) {
+    state =  Object.assign(
+      {},
+      state,
+    );
+
+    return state;
+  }
+
+  _restoreHandlers = () => {
+    this.#setInnerHandlers();
+    this.setCloseClickHandler(this._callback.editClick);
+    this.setFormSubmitHandler(this._callback.formSubmit);
+  };
+
 }
