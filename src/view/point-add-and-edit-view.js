@@ -1,6 +1,9 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
-import { getRandomElements } from '../utils/common.js';
 import { humanizePointDateForm, humanizePointTime } from '../utils/point.js';
+import flatpickr from 'flatpickr';
+
+import 'flatpickr/dist/flatpickr.min.css';
+
 
 const BLANK_POINT = {
   name: '',
@@ -221,17 +224,70 @@ const editPointTemplate = (point = {}) => {
 };
 
 export default class PointAddAndEditView extends AbstractStatefulView {
+  #datepicker = null;
 
   constructor(point = BLANK_POINT) {
     super();
     this._state = PointAddAndEditView.parsePointToState(point);
 
     this.#setInnerHandlers();
+    this.#setDatepickerFrom();
+    this.#setDatepickerTo();
   }
 
   get template() {
     return editPointTemplate(this._state);
   }
+
+  removeElement = () => {
+    super.removeElement();
+
+    if (this.#datepicker) {
+      this.#datepicker.destroy();
+      this.#datepicker = null;
+    }
+  };
+
+  #dateFromChangeHandler = ([userDate]) => {
+    this.updateElement({
+      dateFrom: userDate,
+    });
+  };
+
+  #dateToChangeHandler = ([userDate]) => {
+    this.updateElement({
+      dateTo: userDate,
+    });
+  };
+
+  #setDatepickerFrom = () => {
+    if (this._state.dateFrom) {
+      this.#datepicker = flatpickr(
+        this.element.querySelector('input[name="event-start-time"]'),
+        {
+          enableTime: true,
+          dateFormat: 'd/m/y H:i',
+          defaultDate: this._state.dateFrom,
+          onChange: this.#dateFromChangeHandler, // На событие flatpickr передаём наш колбэк
+        },
+      );
+    }
+  };
+
+  #setDatepickerTo = () => {
+    if (this._state.dateTo) {
+      this.#datepicker = flatpickr(
+        this.element.querySelector('input[name="event-end-time"]'),
+        {
+          minDate: this._state.dateFrom,
+          enableTime: true,
+          dateFormat: 'd/m/y H:i',
+          defaultDate: this._state.dateTo,
+          onChange: this.#dateToChangeHandler, // На событие flatpickr передаём наш колбэк
+        },
+      );
+    }
+  };
 
   reset = (point) => {
     this.updateElement(
@@ -306,6 +362,8 @@ export default class PointAddAndEditView extends AbstractStatefulView {
 
   _restoreHandlers = () => {
     this.#setInnerHandlers();
+    this.#setDatepickerFrom();
+    this.#setDatepickerTo();
     this.setCloseClickHandler(this._callback.editClick);
     this.setFormSubmitHandler(this._callback.formSubmit);
   };
