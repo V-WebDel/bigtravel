@@ -1,6 +1,7 @@
 import { render, replace, remove } from '../framework/render.js';
 import PointAddAndEditView from '../view/point-add-and-edit-view.js';
 import PointItemView from '../view/trip-point-item-view.js';
+import { UserAction, UpdateType } from '../utils/const.js';
 
 const Mode = {
   DEFAULT: 'DEFAULT',
@@ -35,8 +36,9 @@ export default class PointPresenter {
 
     this.#pointComponent.setEditClickHandler(this.#replacePointToForm);
     this.#pointComponent.setFavoriteClickHandler(this.#handleFavoriteClick);
-    this.#pointAddAndEditComponent.setFormSubmitHandler(this.#replaceFormToPoint);
+    this.#pointAddAndEditComponent.setFormSubmitHandler(this.#handleFormSubmit);
     this.#pointAddAndEditComponent.setCloseClickHandler(this.#replaceFormToPoint);
+    this.#pointAddAndEditComponent.setDeleteClickHandler(this.#handleDeleteClick);
 
     if (prevPointComponent === null || prevPointAddAndEditComponent === null) {
       render(this.#pointComponent, this.#pointListContainer);
@@ -80,6 +82,7 @@ export default class PointPresenter {
     this.#mode = Mode.DEFAULT;
   };
 
+
   #onEscKeyDown = (evt) => {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
@@ -90,11 +93,32 @@ export default class PointPresenter {
   };
 
   #handleFavoriteClick = () => {
-    this.#changeData({...this.#point, isFavorite: !this.#point.isFavorite});
+    this.#changeData(
+      UserAction.UPDATE_POINT,
+      UpdateType.MINOR,
+      {...this.#point, isFavorite: !this.#point.isFavorite},
+    );
   };
 
-  #handleFormSubmit = (point) => {
-    this.#changeData(point);
+  #handleFormSubmit = (update) => {
+    // Проверяем, поменялись ли в задаче данные, которые попадают под фильтрацию,
+    // а значит требуют перерисовки списка - если таких нет, это PATCH-обновление
+    const isMinorUpdate = true;
+
+    this.#changeData(
+      UserAction.UPDATE_POINT,
+      isMinorUpdate ? UpdateType.MINOR : UpdateType.PATCH,
+      update,
+    );
+    this.#replaceFormToPoint();
+  };
+
+  #handleDeleteClick = (point) => {
+    this.#changeData(
+      UserAction.DELETE_POINT,
+      UpdateType.MINOR,
+      point,
+    );
     this.#replaceFormToPoint();
   };
 }

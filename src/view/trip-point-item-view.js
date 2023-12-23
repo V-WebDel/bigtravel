@@ -6,12 +6,12 @@ const createPointTemplate = (point) => {
     date = null,
     name = '',
     type = 'flight',
-    basePrice = '',
+    basePrice,
     dateFrom = null,
     dateTo = null,
     isFavorite = false,
+    offers = [],
     OffersByType,
-    LocalPoint,
   } = point;
 
   const datePointFull = date !== null ? humanizePointDateFull(date) : '';
@@ -31,7 +31,7 @@ const createPointTemplate = (point) => {
       const offerList = [];
 
       offersArray.forEach((item) => {
-        if (LocalPoint.offers.includes(item.id)) {
+        if (offers.includes(item.id)) {
           offerList.push(
             `<li class="event__offer">
               <span class="event__offer-title">${item.title}</span>
