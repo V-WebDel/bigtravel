@@ -3,19 +3,18 @@ import { formatDuration, humanizePointDateFull, humanizePointDateTime, humanizeP
 
 const createPointTemplate = (point) => {
   const {
-    date = null,
     name = '',
     type = 'flight',
     basePrice,
-    dateFrom = null,
-    dateTo = null,
+    dateFrom = new Date(),
+    dateTo = new Date(),
     isFavorite = false,
     offers = [],
     OffersByType,
   } = point;
 
-  const datePointFull = date !== null ? humanizePointDateFull(date) : '';
-  const datePoint = date !== null ? humanizePointDate(date) : '';
+  const datePointFull = dateFrom !== null ? humanizePointDateFull(dateFrom) : '';
+  const datePoint = dateFrom !== null ? humanizePointDate(dateFrom) : '';
   const timePointFrom = dateFrom !== null ? humanizePointTime(dateFrom) : '';
   const timePointTo = dateTo !== null ? humanizePointTime(dateTo) : '';
   const dateTimePointFrom = dateFrom !== null ? humanizePointDateTime(dateFrom) : '';

@@ -11,8 +11,8 @@ const BLANK_POINT = {
   name: '',
   type: 'flight',
   basePrice: '',
-  dateFrom: null,
-  dateTo: null,
+  dateFrom: new Date(),
+  dateTo: new Date(),
   OffersByType,
   Destination,
   offers: [1],
@@ -297,7 +297,7 @@ export default class PointAddAndEditView extends AbstractStatefulView {
 
   #editClickHandler = (evt) => {
     evt.preventDefault();
-    this._callback.editClick();
+    this._callback.editClick(PointAddAndEditView.parsePointToState(this._state));
   };
 
 
@@ -317,6 +317,7 @@ export default class PointAddAndEditView extends AbstractStatefulView {
 
     this.updateElement({
       type: evt.currentTarget.value,
+      offers: []
     });
   };
 

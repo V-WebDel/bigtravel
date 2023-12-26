@@ -17,6 +17,5 @@ export default class AddPointBtnView extends AbstractView {
     this._callback.newBtnClick = callback;
     this.element.addEventListener('click', callback);
   };
-
 }
 
