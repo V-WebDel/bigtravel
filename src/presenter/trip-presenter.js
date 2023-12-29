@@ -2,6 +2,7 @@ import { render, RenderPosition, remove } from '../framework/render.js';
 import TripSortView from '../view/trip-sort-view.js';
 import PointsListView from '../view/trip-point-list-view.js';
 import EmptyListView from '../view/empty-list-view.js';
+import LoadingView from '../view/loading-view';
 import PointPresenter from './point-presenter';
 import PointNewPresenter from './new-point-presenter.js';
 import { sortPointUp, comparePrice, compareDuration } from '../utils/point.js';
@@ -10,9 +11,12 @@ import { filter, SortType, UserAction, UpdateType, FilterType } from '../utils/c
 export default class TripPresenter {
   #container = null;
   #pointsModel = null;
+  #destinationsModel = null;
+  #offersModel = null;
   #filterModel = null;
 
   #pointsListView = new PointsListView();
+  #loadingComponent = new LoadingView();
   #sortComponent = null;
   #emptyListView = null;
   #pointNewPresenter = null;
@@ -20,11 +24,14 @@ export default class TripPresenter {
 
   #currentSortType = SortType.DEFAULT;
   #filterType = FilterType.EVERYTHING;
+  #isLoading = true;
 
 
-  constructor(container, pointsModel, filterModel) {
+  constructor(container, pointsModel, filterModel, offersModel, destinationsModel) {
     this.#container = container;
     this.#pointsModel = pointsModel;
+    this.#destinationsModel = destinationsModel;
+    this.#offersModel = offersModel;
     this.#filterModel = filterModel;
 
     this.#pointNewPresenter = new PointNewPresenter(this.#pointsListView.element, this.#handleViewAction);
@@ -94,11 +101,11 @@ export default class TripPresenter {
   };
 
 
-  #handleModelEvent = (updateType, data) => {
+  #handleModelEvent = (updateType, data, offersList, destinations) => {
     switch (updateType) {
       case UpdateType.PATCH:
         // - обновить часть списка (например, когда поменялось описание)
-        this.#pointPresenter.get(data.id).init(data);
+        this.#pointPresenter.get(data.id).init(data, offersList, destinations);
         break;
       case UpdateType.MINOR:
         // - обновить список (например, когда задача ушла в архив)
@@ -110,6 +117,12 @@ export default class TripPresenter {
         this.#clearTrip({resetSortType: true});
         this.#renderTrip();
         break;
+      case UpdateType.INIT:
+        this.#isLoading = false;
+        remove(this.#loadingComponent);
+        this.#clearTrip();
+        this.#renderTrip();
+        break;
     }
   };
 
@@ -118,9 +131,9 @@ export default class TripPresenter {
     this.#pointPresenter.forEach((presenter) => presenter.resetView());
   };
 
-  #renderPoint = (point) => {
+  #renderPoint = (point, offersList, destinations) => {
     const pointPresenter = new PointPresenter(this.#pointsListView.element, this.#handleViewAction, this.#handleModeChange);
-    pointPresenter.init(point);
+    pointPresenter.init(point, offersList, destinations);
     this.#pointPresenter.set(point.id, pointPresenter);
   };
 
@@ -133,14 +146,17 @@ export default class TripPresenter {
     render(this.#emptyListView, this.#pointsListView.element, RenderPosition.AFTERBEGIN);
   };
 
-  #clearTrip = ({resetSortType = false} = {}) => {
-    // const pointCount = this.points.length;
+  #renderLoading = () => {
+    render(this.#loadingComponent, this.#pointsListView.element, RenderPosition.AFTERBEGIN);
+  };
 
+  #clearTrip = ({resetSortType = false} = {}) => {
     this.#pointNewPresenter.destroy();
     this.#pointPresenter.forEach((presenter) => presenter.destroy());
     this.#pointPresenter.clear();
 
     remove(this.#sortComponent);
+    remove(this.#loadingComponent);
 
     if (this.#emptyListView) {
       remove(this.#emptyListView);
@@ -153,10 +169,15 @@ export default class TripPresenter {
 
 
   #renderTrip = () => {
-    const pointCount = this.points.length;
-
     this.#renderSort();
     render(this.#pointsListView, this.#container);
+
+    if (this.#isLoading || this.#isLoading === undefined) {
+      this.#renderLoading();
+      return;
+    }
+
+    const pointCount = this.points.length;
 
     if (pointCount === 0) {
       this.#renderNoPoints();

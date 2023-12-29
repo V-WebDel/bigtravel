@@ -48,14 +48,14 @@ const createDestinationNames = (destinationArr) => {
 };
 
 
-const editPointTemplate = (point = {}) => {
+const editPointTemplate = (point = {}, destinations) => {
   const {
     name = '',
     basePrice = '',
     dateFrom = null,
     dateTo = null,
     type = 'flight',
-    offers = [1],
+    offers = [],
     deleteCancel = false
   } = point;
 

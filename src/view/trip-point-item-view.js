@@ -1,17 +1,17 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import { formatDuration, humanizePointDateFull, humanizePointDateTime, humanizePointDate, humanizePointTime } from '../utils/point.js';
 
-const createPointTemplate = (point) => {
+const createPointTemplate = (point, offersList) => {
   const {
-    name = '',
     type = 'flight',
+    name = '',
     basePrice,
     dateFrom = new Date(),
     dateTo = new Date(),
     isFavorite = false,
     offers = [],
-    OffersByType,
   } = point;
+
 
   const datePointFull = dateFrom !== null ? humanizePointDateFull(dateFrom) : '';
   const datePoint = dateFrom !== null ? humanizePointDate(dateFrom) : '';
@@ -25,26 +25,42 @@ const createPointTemplate = (point) => {
 
   const offersElements = (arr) => {
 
-    if (Object.prototype.hasOwnProperty.call(arr, type)) {
-      const offersArray = arr[type];
-      const offerList = [];
+    const offersArray = arr.filter(item => item.type === type).map(item => item.offers);
+    console.log(arr);
+    const offerList = [];
 
-      offersArray.forEach((item) => {
-        if (offers.includes(item.id)) {
-          offerList.push(
-            `<li class="event__offer">
-              <span class="event__offer-title">${item.title}</span>
-              &plus;&euro;&nbsp;
-              <span class="event__offer-price">${item.price}</span>
-            </li>`
-          );
-        }
-      });
+    offersArray.forEach((item) => {
+      if (offers.includes(item.id)) {
+        offerList.push(
+          `<li class="event__offer">
+            <span class="event__offer-title">${item.title}</span>
+            &plus;&euro;&nbsp;
+            <span class="event__offer-price">${item.price}</span>
+          </li>`
+        );
+      }
+    });
 
-      return offerList.join(' ');
-    } else {
-      return '';
-    }
+    // if (Object.prototype.hasOwnProperty.call(arr, type)) {
+    //   const offersArray = arr[type];
+    //   const offerList = [];
+
+    //   offersArray.forEach((item) => {
+    //     if (offers.includes(item.id)) {
+    //       offerList.push(
+    //         `<li class="event__offer">
+    //           <span class="event__offer-title">${item.title}</span>
+    //           &plus;&euro;&nbsp;
+    //           <span class="event__offer-price">${item.price}</span>
+    //         </li>`
+    //       );
+    //     }
+    //   });
+
+    //   return offerList.join(' ');
+    // } else {
+    //   return '';
+    // }
   };
 
 
@@ -72,7 +88,7 @@ const createPointTemplate = (point) => {
         <h4 class="visually-hidden">Offers:</h4>
 
         <ul class="event__selected-offers">
-          ${offersElements(OffersByType.offers)}
+          ${offersList}
         </ul>
 
         <button class="${favoriteClassName}" type="button">
@@ -91,14 +107,16 @@ const createPointTemplate = (point) => {
 
 export default class TripPointItemView extends AbstractView {
   #point = null;
+  #offersList = null;
 
-  constructor(point) {
+  constructor(point, offersList) {
     super();
     this.#point = point;
+    this.#offersList = offersList;
   }
 
   get template() {
-    return createPointTemplate(this.#point);
+    return createPointTemplate(this.#point, this.#offersList);
   }
 
 

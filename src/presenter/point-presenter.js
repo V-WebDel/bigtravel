@@ -1,6 +1,6 @@
 import { render, replace, remove } from '../framework/render.js';
 import PointAddAndEditView from '../view/point-add-and-edit-view.js';
-import PointItemView from '../view/trip-point-item-view.js';
+import TripPointItemView from '../view/trip-point-item-view.js';
 import { UserAction, UpdateType } from '../utils/const.js';
 
 const Mode = {
@@ -17,22 +17,30 @@ export default class PointPresenter {
   #pointAddAndEditComponent = null;
 
   #point = null;
+  #offersModel = null;
+  #destinationsModel = null;
+  #offersList = null;
+  #destinations = null;
   #mode = Mode.DEFAULT;
 
-  constructor(pointListContainer, changeData, changeMode) {
+  constructor(pointListContainer, changeData, changeMode, offersModel, destinationsModel) {
     this.#pointListContainer = pointListContainer;
     this.#changeData = changeData;
     this.#changeMode = changeMode;
+    this.#offersModel = offersModel;
+    this.#destinationsModel = destinationsModel;
   }
 
-  init = (point) => {
+  init = (point, offersList, destinations) => {
     this.#point = point;
+    this.#offersList = offersList;
+    this.#destinations = destinations;
 
     const prevPointComponent = this.#pointComponent;
     const prevPointAddAndEditComponent = this.#pointAddAndEditComponent;
 
-    this.#pointComponent = new PointItemView(point);
-    this.#pointAddAndEditComponent = new PointAddAndEditView(point);
+    this.#pointComponent = new TripPointItemView(point, offersList);
+    this.#pointAddAndEditComponent = new PointAddAndEditView(point, offersList, destinations);
 
     this.#pointComponent.setEditClickHandler(this.#replacePointToForm);
     this.#pointComponent.setFavoriteClickHandler(this.#handleFavoriteClick);
