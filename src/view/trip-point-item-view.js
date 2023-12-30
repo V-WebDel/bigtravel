@@ -1,15 +1,16 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import { formatDuration, humanizePointDateFull, humanizePointDateTime, humanizePointDate, humanizePointTime } from '../utils/point.js';
 
+
 const createPointTemplate = (point, offersList) => {
   const {
     type = 'flight',
-    name = '',
     basePrice,
     dateFrom = new Date(),
     dateTo = new Date(),
     isFavorite = false,
     offers = [],
+    destination
   } = point;
 
 
@@ -25,11 +26,16 @@ const createPointTemplate = (point, offersList) => {
 
   const offersElements = (arr) => {
 
-    const offersArray = arr.filter(item => item.type === type).map(item => item.offers);
-    console.log(arr);
     const offerList = [];
+    const offersArrays = arr.filter((object) => object.type === type).map((object) => object.offers);
 
-    offersArray.forEach((item) => {
+    function filterById(offersArray) {
+      return offersArray.filter((offer) => offers.includes(offer.id));
+    }
+
+    const currentOffers = offersArrays.flatMap(filterById);
+
+    currentOffers.forEach((item) => {
       if (offers.includes(item.id)) {
         offerList.push(
           `<li class="event__offer">
@@ -41,26 +47,7 @@ const createPointTemplate = (point, offersList) => {
       }
     });
 
-    // if (Object.prototype.hasOwnProperty.call(arr, type)) {
-    //   const offersArray = arr[type];
-    //   const offerList = [];
-
-    //   offersArray.forEach((item) => {
-    //     if (offers.includes(item.id)) {
-    //       offerList.push(
-    //         `<li class="event__offer">
-    //           <span class="event__offer-title">${item.title}</span>
-    //           &plus;&euro;&nbsp;
-    //           <span class="event__offer-price">${item.price}</span>
-    //         </li>`
-    //       );
-    //     }
-    //   });
-
-    //   return offerList.join(' ');
-    // } else {
-    //   return '';
-    // }
+    return offerList.join(' ');
   };
 
 
@@ -73,7 +60,7 @@ const createPointTemplate = (point, offersList) => {
         <div class="event__type">
           <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
         </div>
-        <h3 class="event__title">${type} ${name}</h3>
+        <h3 class="event__title">${type} ${destination.name}</h3>
         <div class="event__schedule">
           <p class="event__time">
             <time class="event__start-time" datetime="${dateTimePointFrom}">${timePointFrom}</time>
@@ -88,7 +75,7 @@ const createPointTemplate = (point, offersList) => {
         <h4 class="visually-hidden">Offers:</h4>
 
         <ul class="event__selected-offers">
-          ${offersList}
+          ${offersElements(offersList)}
         </ul>
 
         <button class="${favoriteClassName}" type="button">

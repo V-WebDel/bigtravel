@@ -30,9 +30,9 @@ export default class TripPresenter {
   constructor(container, pointsModel, filterModel, offersModel, destinationsModel) {
     this.#container = container;
     this.#pointsModel = pointsModel;
-    this.#destinationsModel = destinationsModel;
-    this.#offersModel = offersModel;
     this.#filterModel = filterModel;
+    this.#offersModel = offersModel;
+    this.#destinationsModel = destinationsModel;
 
     this.#pointNewPresenter = new PointNewPresenter(this.#pointsListView.element, this.#handleViewAction);
 
@@ -101,11 +101,11 @@ export default class TripPresenter {
   };
 
 
-  #handleModelEvent = (updateType, data, offersList, destinations) => {
+  #handleModelEvent = (updateType, data) => {
     switch (updateType) {
       case UpdateType.PATCH:
         // - обновить часть списка (например, когда поменялось описание)
-        this.#pointPresenter.get(data.id).init(data, offersList, destinations);
+        this.#pointPresenter.get(data.id).init(data);
         break;
       case UpdateType.MINOR:
         // - обновить список (например, когда задача ушла в архив)
@@ -131,7 +131,10 @@ export default class TripPresenter {
     this.#pointPresenter.forEach((presenter) => presenter.resetView());
   };
 
-  #renderPoint = (point, offersList, destinations) => {
+  #renderPoint = async (point, offersList, destinations) => {
+    offersList = await this.#offersModel.get();
+    destinations = await this.#destinationsModel.get();
+
     const pointPresenter = new PointPresenter(this.#pointsListView.element, this.#handleViewAction, this.#handleModeChange);
     pointPresenter.init(point, offersList, destinations);
     this.#pointPresenter.set(point.id, pointPresenter);
