@@ -1,6 +1,6 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import { formatDuration, humanizePointDateFull, humanizePointDateTime, humanizePointDate, humanizePointTime } from '../utils/point.js';
-
+import he from 'he';
 
 const createPointTemplate = (point, offersList) => {
   const {
@@ -12,7 +12,6 @@ const createPointTemplate = (point, offersList) => {
     offers = [],
     destination
   } = point;
-
 
   const datePointFull = dateFrom !== null ? humanizePointDateFull(dateFrom) : '';
   const datePoint = dateFrom !== null ? humanizePointDate(dateFrom) : '';
@@ -60,7 +59,7 @@ const createPointTemplate = (point, offersList) => {
         <div class="event__type">
           <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
         </div>
-        <h3 class="event__title">${type} ${destination.name}</h3>
+        <h3 class="event__title">${type} ${he.encode(destination.name)}</h3>
         <div class="event__schedule">
           <p class="event__time">
             <time class="event__start-time" datetime="${dateTimePointFrom}">${timePointFrom}</time>

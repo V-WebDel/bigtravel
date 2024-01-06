@@ -38,12 +38,13 @@ const handleNewPointButtonClick = () => {
   newPointButtonComponent.element.disabled = true;
 };
 
-render(newPointButtonComponent, tripMain);
-newPointButtonComponent.setClickHandler(handleNewPointButtonClick);
-
 
 filterPresenter.init();
 tripPresenter.init();
+pointsModel.init().finally(() => {
+  render(newPointButtonComponent, tripMain);
+  newPointButtonComponent.setClickHandler(handleNewPointButtonClick);
+});
+
 // destinationsModel.init();
 // offersModel.init();
-pointsModel.init();

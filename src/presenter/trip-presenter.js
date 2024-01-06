@@ -34,7 +34,7 @@ export default class TripPresenter {
     this.#offersModel = offersModel;
     this.#destinationsModel = destinationsModel;
 
-    this.#pointNewPresenter = new PointNewPresenter(this.#pointsListView.element, this.#handleViewAction);
+    this.#pointNewPresenter = new PointNewPresenter(this.#pointsListView.element, this.#handleViewAction, this.#handleModeChange);
 
     this.#pointsModel.addObserver(this.#handleModelEvent);
     this.#filterModel.addObserver(this.#handleModelEvent);
@@ -61,10 +61,13 @@ export default class TripPresenter {
   };
 
 
-  createPoint = (callback) => {
+  createPoint = async (callback, offersList, destinations) => {
+    offersList = await this.#offersModel.get();
+    destinations = await this.#destinationsModel.get();
+
     this.#currentSortType = SortType.DEFAULT;
     this.#filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
-    this.#pointNewPresenter.init(callback);
+    this.#pointNewPresenter.init(callback, offersList, destinations);
   };
 
   #handleSortTypeChange = (sortType) => {
@@ -86,15 +89,26 @@ export default class TripPresenter {
   };
 
 
-  #handleViewAction = (actionType, updateType, update) => {
+  #handleViewAction = async (actionType, updateType, update) => {
     switch (actionType) {
       case UserAction.UPDATE_POINT:
-        this.#pointsModel.updatePoint(updateType, update);
+        this.#pointPresenter.get(update.id).setSaving();
+        try {
+          this.#pointsModel.updatePoint(updateType, update);
+        } catch (err) {
+          this.#pointPresenter.get(update.id).setAborting();
+        }
         break;
       case UserAction.ADD_POINT:
-        this.#pointsModel.addPoint(updateType, update);
+        this.#pointNewPresenter.setSaving();
+        try {
+          this.#pointsModel.addPoint(updateType, update);
+        } catch (err) {
+          this.#pointNewPresenter.setAborting();
+        }
         break;
       case UserAction.DELETE_POINT:
+        this.#pointPresenter.get(update.id).setDeleting();
         this.#pointsModel.deletePoint(updateType, update);
         break;
     }
@@ -131,17 +145,18 @@ export default class TripPresenter {
     this.#pointPresenter.forEach((presenter) => presenter.resetView());
   };
 
-  #renderPoint = async (point, offersList, destinations) => {
-    offersList = await this.#offersModel.get();
-    destinations = await this.#destinationsModel.get();
+  #renderPoint = (point, offersList, destinations) => {
 
     const pointPresenter = new PointPresenter(this.#pointsListView.element, this.#handleViewAction, this.#handleModeChange);
     pointPresenter.init(point, offersList, destinations);
     this.#pointPresenter.set(point.id, pointPresenter);
   };
 
-  #renderPoints = (points) => {
-    points.forEach((point) => this.#renderPoint(point));
+  #renderPoints = async (points, offersList, destinations) => {
+    offersList = await this.#offersModel.get();
+    destinations = await this.#destinationsModel.get();
+
+    points.forEach((point) => this.#renderPoint(point, offersList, destinations));
   };
 
   #renderNoPoints = () => {

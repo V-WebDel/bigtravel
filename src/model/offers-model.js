@@ -19,8 +19,9 @@ export default class OffersModel extends Observable {
     try {
       const offers = await this.#pointsApiService.offers;
       this.#offersList = offers;
-    } catch(err) {
+    } catch(error) {
       this.#offersList = [];
+      throw error;
     }
   };
 }
