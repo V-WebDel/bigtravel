@@ -9,7 +9,7 @@ import OffersModel from './model/offers-model.js';
 import FilterModel from './model/filter-model.js';
 import ApiService from './api-service.js';
 
-const AUTHORIZATION = 'Basic hS2sfSrtycl1sa2j';
+const AUTHORIZATION = 'Basic hS2sfgjycl1sa2j';
 const END_POINT = 'https://17.ecmascript.pages.academy/big-trip/';
 
 

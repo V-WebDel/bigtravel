@@ -61,13 +61,13 @@ export default class TripPresenter {
   };
 
 
-  createPoint = async (callback, offersList, destinations) => {
-    offersList = await this.#offersModel.get();
-    destinations = await this.#destinationsModel.get();
+  createPoint = async (callback) => {
+    const listOffers = await this.#offersModel.get();
+    const listDestinations = await this.#destinationsModel.get();
 
     this.#currentSortType = SortType.DEFAULT;
     this.#filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
-    this.#pointNewPresenter.init(callback, offersList, destinations);
+    this.#pointNewPresenter.init(callback, listOffers, listDestinations);
   };
 
   #handleSortTypeChange = (sortType) => {
@@ -109,7 +109,11 @@ export default class TripPresenter {
         break;
       case UserAction.DELETE_POINT:
         this.#pointPresenter.get(update.id).setDeleting();
-        this.#pointsModel.deletePoint(updateType, update);
+        try {
+          this.#pointsModel.deletePoint(updateType, update);
+        } catch (err) {
+          this.#pointPresenter.get(update.id).setAborting();
+        }
         break;
     }
   };
@@ -152,11 +156,11 @@ export default class TripPresenter {
     this.#pointPresenter.set(point.id, pointPresenter);
   };
 
-  #renderPoints = async (points, offersList, destinations) => {
-    offersList = await this.#offersModel.get();
-    destinations = await this.#destinationsModel.get();
+  #renderPoints = async (points) => {
+    const listOffers = await this.#offersModel.get();
+    const listDestinations = await this.#destinationsModel.get();
 
-    points.forEach((point) => this.#renderPoint(point, offersList, destinations));
+    points.forEach((point) => this.#renderPoint(point, listOffers, listDestinations));
   };
 
   #renderNoPoints = () => {

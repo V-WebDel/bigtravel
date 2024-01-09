@@ -21,9 +21,9 @@ export const getWeightForNullDate = (dateA, dateB) => {
 };
 
 export const sortPointUp = (pointA, pointB) => {
-  const weight = getWeightForNullDate(pointA.date, pointB.date);
+  const weight = getWeightForNullDate(pointA.dateFrom, pointB.dateFrom);
 
-  return weight ?? dayjs(pointA.date).diff(dayjs(pointB.date));
+  return weight ?? dayjs(pointA.dateFrom).diff(dayjs(pointB.dateFrom));
 };
 
 export const sortPointDown = (pointA, pointB) => {

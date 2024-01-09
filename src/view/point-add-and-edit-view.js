@@ -77,18 +77,18 @@ const editPointTemplate = (point = {}, offersList, destinations) => {
 
   const isSubmitDisabled = (destination.name === '' || basePrice === '' || dateFrom === null || dateTo === null);
 
-  const offersElements = (arr) => {
+  const getOfferList = (listOffers, currentType) => {
     const offerList = [];
 
-    if(arr !== undefined) {
-      const offersArrays = arr.filter((object) => object.type === type).map((object) => object.offers);
+    if (listOffers !== undefined) {
+      const currentOffer = listOffers.find((itemOffer) => itemOffer.type === currentType);
 
-      offersArrays.forEach((itemsArray) => {
-        itemsArray.forEach((item, index) => {
+      if (currentOffer) {
+        currentOffer.offers.forEach((item, index) => {
           const isChecked = offers.includes(item.id);
           offerList.push(`
             <div class="event__offer-selector">
-              <input class="event__offer-checkbox visually-hidden" id="event-offer-luggage-${index + 1}" type="checkbox" name="event-offer-luggage" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''}>
+              <input class="event__offer-checkbox visually-hidden" id="event-offer-luggage-${index + 1}" type="checkbox" name="event-offer-luggage" ${isChecked ? 'checked' : ''}>
               <label class="event__offer-label" for="event-offer-luggage-${index + 1}">
                 <span class="event__offer-title">${item.title}</span>
                 &plus;&euro;&nbsp;
@@ -97,7 +97,7 @@ const editPointTemplate = (point = {}, offersList, destinations) => {
             </div>
           `);
         });
-      });
+      }
 
       return offerList.join(' ');
     }
@@ -165,7 +165,7 @@ const editPointTemplate = (point = {}, offersList, destinations) => {
     }
   };
 
-  const showListOffers = offersElements(offersList) !== undefined ? `<section class="event__section  event__section--offers"><h3 class="event__section-title  event__section-title--offers">Offers</h3><div class="event__available-offers">${offersElements(offersList)}</div></section>` : '';
+  const showListOffers = getOfferList(offersList, type) !== undefined ? `<section class="event__section  event__section--offers"><h3 class="event__section-title  event__section-title--offers">Offers</h3><div class="event__available-offers">${getOfferList(offersList, type)}</div></section>` : '';
   const eventTypes = createEventTypes(offersList, type);
   const eventDestinationNames = createDestinationNames(destinations);
   const sectionDestination = getSectionDestination();
@@ -245,7 +245,7 @@ const editPointTemplate = (point = {}, offersList, destinations) => {
 
 
 export default class PointAddAndEditView extends AbstractStatefulView {
-  _datepicker = null;
+  #datepicker = null;
   #offersList = null;
   #destinations = null;
 
@@ -284,28 +284,62 @@ export default class PointAddAndEditView extends AbstractStatefulView {
   };
 
   #setDatepickerFrom = () => {
-    this._datepicker = flatpickr(
-      this.element.querySelector('input[name="event-start-time"]'),
-      {
-        enableTime: true,
-        dateFormat: 'd/m/y H:i',
-        defaultDate: this._state.dateFrom,
-        onChange: this.#dateFromChangeHandler, // На событие flatpickr передаём наш колбэк
-      },
-    );
+    const inputElement = this.element.querySelector('input[name="event-start-time"]');
+
+    if (this._state.dateFrom) {
+      this.#datepicker = flatpickr(
+        inputElement,
+        {
+          enableTime: true,
+          dateFormat: 'd/m/y H:i',
+          defaultDate: this._state.dateFrom,
+          onChange: this.#dateFromChangeHandler,
+        }
+      );
+    } else {
+      inputElement.addEventListener('focus', () => {
+        this.#datepicker = flatpickr(
+          inputElement,
+          {
+            minDate: new Date(),
+            enableTime: true,
+            dateFormat: 'd/m/y H:i',
+            defaultDate: new Date(),
+            onChange: this.#dateFromChangeHandler,
+          }
+        );
+      }, { once: true });
+    }
   };
 
   #setDatepickerTo = () => {
-    this._datepicker = flatpickr(
-      this.element.querySelector('input[name="event-end-time"]'),
-      {
-        minDate: this._state.dateFrom,
-        enableTime: true,
-        dateFormat: 'd/m/y H:i',
-        defaultDate: this._state.dateTo,
-        onChange: this.#dateToChangeHandler, // На событие flatpickr передаём наш колбэк
-      },
-    );
+    const inputElement = this.element.querySelector('input[name="event-end-time"]');
+
+    if (this._state.dateTo) {
+      this.#datepicker = flatpickr(
+        inputElement,
+        {
+          minDate: this._state.dateFrom,
+          enableTime: true,
+          dateFormat: 'd/m/y H:i',
+          defaultDate: this._state.dateTo,
+          onChange: this.#dateToChangeHandler,
+        }
+      );
+    } else {
+      inputElement.addEventListener('focus', () => {
+        this.#datepicker = flatpickr(
+          inputElement,
+          {
+            minDate: this._state.dateFrom,
+            enableTime: true,
+            dateFormat: 'd/m/y H:i',
+            defaultDate: this._state.dateTo,
+            onChange: this.#dateToChangeHandler,
+          }
+        );
+      }, { once: true });
+    }
   };
 
 
