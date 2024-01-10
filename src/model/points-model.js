@@ -1,37 +1,28 @@
 import Observable from '../framework/observable.js';
 import {UpdateType} from '../utils/const.js';
-// import { generatePoint } from '../mock/point.js';
 
 export default class PointsModel extends Observable {
   #pointsApiService = null;
   #points = [];
 
-  // #points = Array.from({length: 5}, generatePoint);
-
   constructor(pointsApiService) {
     super();
     this.#pointsApiService = pointsApiService;
-
-    // this.#pointsApiService.points.then((points) => {
-    //   console.log(points.map(this.#adaptToClient));
-    // });
   }
 
   get points() {
-
     return this.#points;
   }
 
-  init = async () => {
+  async init() {
     try {
       const points = await this.#pointsApiService.points;
       this.#points = points.map(this.#adaptToClient);
-      console.log(points);
     } catch(err) {
       this.#points = [];
     }
     this._notify(UpdateType.INIT);
-  };
+  }
 
   async updatePoint(updateType, update) {
     const index = this.#points.findIndex((point) => point.id === update.id);
