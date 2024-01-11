@@ -1,6 +1,6 @@
 import AbstractView from '../framework/view/abstract-view.js';
 
-const createInfo = () => (
+const createInfo = (totalCost) => (
   `<section class="trip-main__trip-info trip-info">
     <div class="trip-info__main">
       <h1 class="trip-info__title">Amsterdam &mdash; Chamonix &mdash; Geneva</h1>
@@ -9,14 +9,26 @@ const createInfo = () => (
     </div>
 
     <p class="trip-info__cost">
-      Total: &euro;&nbsp;<span class="trip-info__cost-value">1230</span>
+      Total: &euro;&nbsp;<span class="trip-info__cost-value">${totalCost}</span>
     </p>
   </section>`
+
 );
 
 export default class TripInfoView extends AbstractView {
+  #totalCost = null;
+
+  constructor(totalCost) {
+    super();
+    this.#totalCost = totalCost;
+  }
 
   get template() {
-    return createInfo();
+    return createInfo(this.#totalCost);
+  }
+
+  updateTotalCost(totalCost) {
+    this.#totalCost = totalCost;
+    this.updateElement();
   }
 }

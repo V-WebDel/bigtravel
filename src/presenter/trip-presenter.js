@@ -3,6 +3,7 @@ import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
 import TripSortView from '../view/trip-sort-view.js';
 import PointsListView from '../view/trip-point-list-view.js';
 import EmptyListView from '../view/empty-list-view.js';
+import TripInfoView from '../view/trip-info-view.js';
 import LoadingView from '../view/loading-view';
 import PointPresenter from './point-presenter';
 import PointNewPresenter from './new-point-presenter.js';
@@ -16,9 +17,11 @@ const TimeLimit = {
 export default class TripPresenter {
   #container = null;
   #pointsModel = null;
+  #filterModel = null;
+  #infoModel = null;
   #destinationsModel = null;
   #offersModel = null;
-  #filterModel = null;
+  #tripInfoView = null;
 
   #pointsListView = new PointsListView();
   #loadingComponent = new LoadingView();
@@ -36,17 +39,21 @@ export default class TripPresenter {
     upperLimit: TimeLimit.UPPER_LIMIT
   });
 
-  constructor(container, pointsModel, filterModel, offersModel, destinationsModel) {
+  constructor(container, pointsModel, filterModel, infoModel, offersModel, destinationsModel) {
     this.#container = container;
     this.#pointsModel = pointsModel;
     this.#filterModel = filterModel;
+    this.#infoModel = infoModel;
     this.#offersModel = offersModel;
     this.#destinationsModel = destinationsModel;
+    this.#tripInfoView = new TripInfoView();
+
 
     this.#pointNewPresenter = new PointNewPresenter(this.#pointsListView.element, this.#handleViewAction, this.#handleModeChange);
 
     this.#pointsModel.addObserver(this.#handleModelEvent);
     this.#filterModel.addObserver(this.#handleModelEvent);
+    this.#infoModel.addObserver(this.#handleModelEvent);
   }
 
   get points() {
@@ -147,6 +154,7 @@ export default class TripPresenter {
         // - обновить всю доску (например, при переключении фильтра)
         this.#clearTrip({resetSortType: true});
         this.#renderTrip();
+        this.#updateTripInfo();
         break;
       case UpdateType.INIT:
         this.#isLoading = false;
@@ -162,9 +170,20 @@ export default class TripPresenter {
     this.#pointPresenter.forEach((presenter) => presenter.resetView());
   };
 
-  #renderPoint = (point, offersList, destinations) => {
+  #updateTripInfo() {
+    const totalCost = this.#calculateTotalCost();
+    this.#infoModel.setTotalCost(totalCost);
+    this.#tripInfoView.updateTotalCost(totalCost);
+  }
 
+  #calculateTotalCost = (points) => {
+    const mainCost = points.reduce((total, point) => total + point.basePrice, 0);
+    return mainCost;
+  };
+
+  #renderPoint = (point, offersList, destinations) => {
     const pointPresenter = new PointPresenter(this.#pointsListView.element, this.#handleViewAction, this.#handleModeChange);
+
     pointPresenter.init(point, offersList, destinations);
     this.#pointPresenter.set(point.id, pointPresenter);
   };
@@ -174,6 +193,7 @@ export default class TripPresenter {
     const listDestinations = await this.#destinationsModel.get();
 
     points.forEach((point) => this.#renderPoint(point, listOffers, listDestinations));
+    console.log(this.#calculateTotalCost(this.points));
   };
 
   #renderNoPoints = () => {
