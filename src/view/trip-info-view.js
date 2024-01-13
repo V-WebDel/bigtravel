@@ -32,11 +32,4 @@ export default class TripInfoView extends AbstractView {
   get template() {
     return createInfo(this.#citiesName, this.#dateStart, this.#dateEnd, this.#totalCost);
   }
-
-  updateTotalCost(dateStart, dateEnd, totalCost) {
-    this.#dateStart = dateStart;
-    this.#dateEnd = dateEnd;
-    this.#totalCost = totalCost;
-    this.updateElement();
-  }
 }
