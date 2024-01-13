@@ -412,8 +412,10 @@ export default class PointAddAndEditView extends AbstractStatefulView {
   #offersCheckChangeHandler = () => {
     const arrOffers = [];
 
-    this.element.querySelectorAll('input[name="event-offer-luggage"]:checked').forEach((element, index) => {
-      arrOffers.push(index + 1);
+    this.element.querySelectorAll('input[name="event-offer-luggage"]').forEach((element, index) => {
+      if (element.checked) {
+        arrOffers.push(index + 1);
+      }
     });
 
     this._setState({

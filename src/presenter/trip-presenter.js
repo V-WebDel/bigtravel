@@ -7,18 +7,20 @@ import TripInfoView from '../view/trip-info-view.js';
 import LoadingView from '../view/loading-view';
 import PointPresenter from './point-presenter';
 import PointNewPresenter from './new-point-presenter.js';
-import { sortPointUp, comparePrice, compareDuration } from '../utils/point.js';
+import { sortPointUp, comparePrice, compareDuration, humanizePointDate } from '../utils/point.js';
 import { filter, SortType, UserAction, UpdateType, FilterType } from '../utils/const.js';
 
 const TimeLimit = {
   LOWER_LIMIT: 350,
   UPPER_LIMIT: 1000,
 };
+
+const tripMain = document.querySelector('.trip-main');
+
 export default class TripPresenter {
   #container = null;
   #pointsModel = null;
   #filterModel = null;
-  #infoModel = null;
   #destinationsModel = null;
   #offersModel = null;
   #tripInfoView = null;
@@ -39,21 +41,17 @@ export default class TripPresenter {
     upperLimit: TimeLimit.UPPER_LIMIT
   });
 
-  constructor(container, pointsModel, filterModel, infoModel, offersModel, destinationsModel) {
+  constructor(container, pointsModel, filterModel, offersModel, destinationsModel) {
     this.#container = container;
     this.#pointsModel = pointsModel;
     this.#filterModel = filterModel;
-    this.#infoModel = infoModel;
     this.#offersModel = offersModel;
     this.#destinationsModel = destinationsModel;
-    this.#tripInfoView = new TripInfoView();
-
 
     this.#pointNewPresenter = new PointNewPresenter(this.#pointsListView.element, this.#handleViewAction, this.#handleModeChange);
 
     this.#pointsModel.addObserver(this.#handleModelEvent);
     this.#filterModel.addObserver(this.#handleModelEvent);
-    this.#infoModel.addObserver(this.#handleModelEvent);
   }
 
   get points() {
@@ -154,7 +152,6 @@ export default class TripPresenter {
         // - обновить всю доску (например, при переключении фильтра)
         this.#clearTrip({resetSortType: true});
         this.#renderTrip();
-        this.#updateTripInfo();
         break;
       case UpdateType.INIT:
         this.#isLoading = false;
@@ -170,15 +167,69 @@ export default class TripPresenter {
     this.#pointPresenter.forEach((presenter) => presenter.resetView());
   };
 
-  #updateTripInfo() {
-    const totalCost = this.#calculateTotalCost();
-    this.#infoModel.setTotalCost(totalCost);
-    this.#tripInfoView.updateTotalCost(totalCost);
-  }
+  #renderTripInfo = async (points) => {
+    // Получаем даты начала и завершения маршрута
+    const datesFrom = points.map((point) => point.dateFrom);
+    const datesTo = points.map((point) => point.dateTo);
+    const dateFrom = new Date(Math.min(...datesFrom));
+    const dateTo = new Date(Math.max(...datesTo));
 
-  #calculateTotalCost = (points) => {
-    const mainCost = points.reduce((total, point) => total + point.basePrice, 0);
-    return mainCost;
+    let matchMonthdateStart;
+    let matchMonthdateEnd;
+
+    if (dateFrom.getMonth() === dateTo.getMonth()) {
+      matchMonthdateStart = dateFrom.getDate().toString();
+      matchMonthdateEnd = humanizePointDate(dateTo);
+    } else {
+      matchMonthdateStart = humanizePointDate(dateFrom);
+      matchMonthdateEnd = humanizePointDate(dateTo);
+    }
+
+    const dateStart = matchMonthdateStart;
+    const dateEnd = matchMonthdateEnd;
+
+    // Получаем названия городов из точек маршрута
+    const cities = points.reduce((acc, point) => {
+      if (acc.length === 0 || acc[acc.length - 1] !== point.destination.name) {
+        acc.push(point.destination.name);
+      }
+      return acc;
+    }, []);
+
+    let citiesString;
+
+    if (cities.length === 2) {
+      citiesString = `${cities[0]} - ${cities[1]}`;
+    } else if (cities.length === 3) {
+      citiesString = `${cities[0]} - ${cities[1]} - ${cities[2]}`;
+    } else {
+      citiesString = `${cities[0]} ... ${cities[cities.length - 1]}`;
+    }
+
+    // Получаем общую стоимость маршрута
+    const baseCost = points.reduce((total, point) => total + point.basePrice, 0);
+
+    let offersCost = 0;
+    const listOffers = await this.#offersModel.get();
+
+    for (const point of points) {
+      // Получаем офферы из модели
+
+      // Получаем список офферов по типу
+      const currentOffer = listOffers.find((itemOffer) => itemOffer.type === point.type);
+
+      // Добавляем стоимость офферов из точки
+      currentOffer.offers.forEach((item) => {
+        if(point.offers.includes(item.id)) {
+          offersCost += item.price;
+        }
+      });
+    }
+    const totalCost = baseCost + offersCost;
+
+    this.#tripInfoView = new TripInfoView(citiesString, dateStart, dateEnd, totalCost);
+
+    render(this.#tripInfoView, tripMain, RenderPosition.AFTERBEGIN);
   };
 
   #renderPoint = (point, offersList, destinations) => {
@@ -193,7 +244,6 @@ export default class TripPresenter {
     const listDestinations = await this.#destinationsModel.get();
 
     points.forEach((point) => this.#renderPoint(point, listOffers, listDestinations));
-    console.log(this.#calculateTotalCost(this.points));
   };
 
   #renderNoPoints = () => {
@@ -210,6 +260,7 @@ export default class TripPresenter {
     this.#pointPresenter.forEach((presenter) => presenter.destroy());
     this.#pointPresenter.clear();
 
+    remove(this.#tripInfoView);
     remove(this.#sortComponent);
     remove(this.#loadingComponent);
 
@@ -240,5 +291,6 @@ export default class TripPresenter {
     }
 
     this.#renderPoints(this.points);
+    this.#renderTripInfo(this.points);
   };
 }
